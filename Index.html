@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>รักพราวด์ — ระบบจัดการวัสดุก่อสร้าง</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0f1117;--bg2:#12141c;--bg3:#1a1d27;--bg4:#2a2d3a;
+  --orange:#e85d04;--orange2:#ff9a3c;--green:#22c55e;--blue:#3b82f6;--purple:#a78bfa;--red:#ef4444;
+  --text:#e8e8e8;--text2:#888;--text3:#555;--border:#2a2d3a;--radius:12px;
+}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-thumb{background:var(--orange);border-radius:2px;}
+
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50;}
+.logo{width:36px;height:36px;background:linear-gradient(135deg,var(--orange),var(--orange2));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.co-name{font-family:'Kanit',sans-serif;font-weight:700;font-size:14px;color:#fff;}
+.co-sub{font-size:10px;color:var(--text2);}
+
+.tabs{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;overflow-x:auto;padding:0 12px;}
+.tabs::-webkit-scrollbar{height:0;}
+.tab{background:none;border:none;color:var(--text2);padding:10px 14px;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:500;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s;}
+.tab.active{color:var(--orange);border-bottom-color:var(--orange);}
+
+.content{max-width:860px;margin:0 auto;padding:16px;}
+.page{display:none;flex-direction:column;gap:14px;}
+.page.active{display:flex;}
+
+.card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+.card-title{font-weight:600;color:var(--orange);margin-bottom:12px;font-size:14px;}
+
+.inp{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:9px 13px;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:13px;width:100%;outline:none;transition:border .2s;}
+.inp:focus{border-color:var(--orange);}
+.inp::placeholder{color:var(--text3);}
+
+.btn{padding:9px 18px;border-radius:8px;border:none;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;transition:all .2s;}
+.btn-p{background:var(--orange);color:#fff;}
+.btn-p:hover{background:#ff6b1a;}
+.btn-s{background:var(--bg4);color:var(--text);border:1px solid var(--border);}
+.btn-s:hover{background:#3a3d4a;}
+.btn-g{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3);}
+.btn-d{background:transparent;color:var(--red);border:1px solid rgba(239,68,68,.3);padding:4px 8px;font-size:11px;border-radius:6px;cursor:pointer;}
+
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+@media(max-width:600px){.g2,.g3{grid-template-columns:1fr;}}
+
+.stat{background:var(--bg2);border-radius:10px;padding:14px;border:1px solid var(--border);}
+.stat-lbl{font-size:11px;color:var(--text2);margin-bottom:4px;}
+.stat-val{font-weight:800;font-size:20px;}
+.stat-sub{font-size:10px;color:var(--text3);margin-top:2px;}
+
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;}
+.b-o{background:rgba(232,93,4,.15);color:var(--orange);}
+.b-g{background:rgba(34,197,94,.15);color:var(--green);}
+.b-b{background:rgba(59,130,246,.15);color:var(--blue);}
+.b-r{background:rgba(239,68,68,.15);color:var(--red);}
+.b-p{background:rgba(167,139,250,.15);color:var(--purple);}
+
+.chat-wrap{height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:14px;}
+.msg-row{display:flex;align-items:flex-start;gap:8px;}
+.msg-row.user{flex-direction:row-reverse;}
+.avatar{width:28px;height:28px;background:linear-gradient(135deg,var(--orange),var(--orange2));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;margin-top:2px;}
+.bubble{max-width:76%;padding:9px 13px;border-radius:14px;font-size:13px;line-height:1.6;white-space:pre-wrap;border:1px solid var(--border);}
+.bubble.bot{background:var(--bg3);border-radius:14px 14px 14px 4px;}
+.bubble.user{background:var(--orange);border:none;border-radius:14px 14px 4px 14px;color:#fff;}
+.bubble.admin{background:#1e2a1e;border-color:rgba(34,197,94,.4);}
+.dot{width:6px;height:6px;background:var(--text2);border-radius:50%;display:inline-block;animation:bounce .8s infinite;}
+.dot:nth-child(2){animation-delay:.15s;}
+.dot:nth-child(3){animation-delay:.3s;}
+@keyframes bounce{0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-6px);}}
+
+.search-wrap{position:relative;}
+.dd{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg3);border:1px solid var(--border);border-radius:10px;z-index:100;max-height:220px;overflow-y:auto;display:none;}
+.dd-item{padding:9px 13px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.dd-item:hover{background:var(--bg4);}
+.dd-item:last-child{border-bottom:none;}
+
+.cart-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);gap:8px;}
+.cart-row:last-child{border-bottom:none;}
+
+.tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.tbl th{background:var(--bg2);padding:9px 10px;text-align:left;color:var(--text2);font-weight:600;border-bottom:1px solid var(--border);}
+.tbl td{padding:9px 10px;border-bottom:1px solid #1e2130;}
+
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.bar-lbl{font-size:12px;color:var(--text2);width:130px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bar{height:18px;border-radius:4px;background:linear-gradient(90deg,var(--orange),var(--orange2));min-width:4px;transition:width .6s;}
+.bar-val{font-size:12px;font-weight:600;flex-shrink:0;}
+
+.qbtn{background:var(--bg4);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:20px;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:11px;transition:all .2s;}
+.qbtn:hover,.qbtn.special{border-color:rgba(232,93,4,.4);color:var(--orange);}
+.qbtn.green{border-color:rgba(34,197,94,.4);color:var(--green);}
+
+/* LOADING */
+.loading{display:flex;align-items:center;justify-content:center;padding:40px;flex-direction:column;gap:12px;}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--orange);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.fade-up{animation:fadeUp .25s ease;}
+
+@media print{
+  .header,.tabs,.no-print{display:none!important;}
+  body{background:#fff;color:#111;}
+  @page{size:A4;margin:15mm;}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">🏗️</div>
+  <div style="flex:1;">
+    <div class="co-name">บริษัท รักพราวด์ จำกัด</div>
+    <div class="co-sub">Rak Proud Co., Ltd. • 085-067-6217</div>
+  </div>
+  <div id="prod-count" style="font-size:11px;color:var(--text2);"></div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="goTab('chat',this)">🤖 AI ที่ปรึกษา</button>
+  <button class="tab" onclick="goTab('products',this)">📦 สินค้า</button>
+  <button class="tab" onclick="goTab('profit',this)">💰 กำไร</button>
+  <button class="tab" onclick="goTab('quote',this)">📄 ใบเสนอราคา</button>
+  <button class="tab" onclick="goTab('area',this)">📐 พื้นที่</button>
+  <button class="tab" onclick="goTab('dashboard',this)">📊 Dashboard</button>
+</div>
+
+<div class="content">
+
+<!-- ========== CHAT ========== -->
+<div id="page-chat" class="page active">
+  <div id="cart-summary" style="display:none;" class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <span style="font-weight:600;color:var(--orange);font-size:13px;">🛒 ตะกร้าสินค้า</span>
+      <button class="btn-d" onclick="clearCart()">เคลียร์</button>
+    </div>
+    <div id="cart-list"></div>
+    <div style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px;display:flex;justify-content:space-between;font-weight:700;">
+      <span>ยอดรวม</span>
+      <span id="cart-total" style="color:var(--green);">0 บาท</span>
+    </div>
+  </div>
+
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div class="chat-wrap" id="chat-msgs"></div>
+    <div style="border-top:1px solid var(--border);padding:10px;display:flex;gap:8px;">
+      <input class="inp" id="chat-inp" placeholder="พิมพ์ชื่อสินค้า หรือถามเรื่องวัสดุก่อสร้าง..." onkeydown="if(event.key==='Enter')sendChat()">
+      <button class="btn btn-p" onclick="sendChat()" style="flex-shrink:0;">ส่ง</button>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:6px;flex-wrap:wrap;">
+    <button class="qbtn" onclick="setInp('ปูนเสือ')">ปูนเสือ</button>
+    <button class="qbtn" onclick="setInp('เหล็ก DB12')">เหล็ก DB12</button>
+    <button class="qbtn" onclick="setInp('กระเบื้อง')">กระเบื้อง</button>
+    <button class="qbtn" onclick="setInp('สี TOA')">สี TOA</button>
+    <button class="qbtn green" onclick="setInp('สรุปยอด')">🧾 สรุปยอด</button>
+    <button class="qbtn special" onclick="setInp('ขอคุยกับเจ้าหน้าที่')">📞 เจ้าหน้าที่</button>
+  </div>
+</div>
+
+<!-- ========== PRODUCTS ========== -->
+<div id="page-products" class="page">
+  <input class="inp" id="prod-search" placeholder="🔍 ค้นหาสินค้า..." oninput="renderProds()">
+  <div class="card" style="padding:10px;overflow-x:auto;">
+    <table class="tbl">
+      <thead><tr>
+        <th>SKU</th><th>ชื่อสินค้า</th><th>หมวดหมู่</th>
+        <th style="text-align:right;">ต้นทุน</th>
+        <th style="text-align:right;">ราคาขาย</th>
+        <th style="text-align:right;">Margin</th>
+        <th>หน่วย</th>
+      </tr></thead>
+      <tbody id="prod-body"><tr><td colspan="7"><div class="loading"><div class="spinner"></div><div style="color:var(--text2);font-size:13px;">กำลังโหลดสินค้า...</div></div></td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ========== PROFIT ========== -->
+<div id="page-profit" class="page">
+  <div class="card">
+    <div class="card-title">💰 คำนวณกำไร</div>
+    <div class="search-wrap">
+      <input class="inp" id="profit-inp" placeholder="🔍 ค้นหาสินค้า..." oninput="searchProfit()" autocomplete="off">
+      <div class="dd" id="profit-dd"></div>
+    </div>
+  </div>
+  <div id="profit-result"></div>
+  <div class="card">
+    <div class="card-title">📈 ภาพรวม Margin ตามหมวดหมู่</div>
+    <div id="profit-overview"></div>
+  </div>
+</div>
+
+<!-- ========== QUOTE ========== -->
+<div id="page-quote" class="page">
+  <div style="display:flex;gap:8px;">
+    <button class="btn btn-p" id="btn-q" onclick="setQMode('quote')">📄 ใบเสนอราคา</button>
+    <button class="btn btn-s" id="btn-d" onclick="setQMode('delivery')">📦 ใบส่งของ</button>
+  </div>
+
+  <div id="import-banner" style="display:none;" class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-size:13px;color:var(--green);font-weight:600;">🛒 มีรายการจากแชท พร้อมนำเข้า</span>
+      <button class="btn btn-g" onclick="importCart()" style="font-size:12px;padding:5px 12px;">นำเข้า ✅</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">👤 ข้อมูลลูกค้า</div>
+    <div style="margin-bottom:10px;">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">เลขผู้เสียภาษี 13 หลัก</div>
+      <div style="display:flex;gap:8px;">
+        <input class="inp" id="q-tax" placeholder="กรอกเลข 13 หลัก..." maxlength="13" oninput="this.value=this.value.replace(/\D/g,'')">
+        <button class="btn btn-s" onclick="fetchTax()" style="flex-shrink:0;padding:9px 12px;">🔍</button>
+      </div>
+      <div id="tax-err" style="font-size:11px;color:var(--red);margin-top:3px;"></div>
+    </div>
+    <div class="g2">
+      <div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">ชื่อบริษัท/ลูกค้า</div>
+        <input class="inp" id="q-name" placeholder="ชื่อลูกค้า" oninput="renderDoc()">
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">ที่อยู่</div>
+        <input class="inp" id="q-addr" placeholder="ที่อยู่" oninput="renderDoc()">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">➕ เพิ่มสินค้า</div>
+    <div class="search-wrap">
+      <input class="inp" id="q-search" placeholder="🔍 ค้นหาสินค้า..." oninput="searchQuote()" autocomplete="off">
+      <div class="dd" id="q-dd"></div>
+    </div>
+  </div>
+
+  <div id="doc-preview" class="card" style="background:#fff;color:#111;"></div>
+
+  <div id="quote-actions" style="display:none;flex-direction:column;gap:8px;" class="no-print">
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-p" onclick="printDoc()" style="flex:1;">🖨️ พิมพ์ / PDF</button>
+      <button class="btn btn-s" onclick="shareDoc()" style="flex:1;">📱 แชร์ LINE</button>
+    </div>
+    <button class="btn btn-s" onclick="saveOrder()" style="width:100%;">💾 บันทึกออเดอร์</button>
+  </div>
+</div>
+
+<!-- ========== AREA ========== -->
+<div id="page-area" class="page">
+  <div class="card">
+    <div class="card-title">📐 คำนวณพื้นที่งาน</div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+      <button class="btn btn-p" id="a-paint" onclick="setArea('paint')">🎨 ทาสี</button>
+      <button class="btn btn-s" id="a-tile" onclick="setArea('tile')">🟫 ปูกระเบื้อง</button>
+      <button class="btn btn-s" id="a-spc" onclick="setArea('spc')">🪵 ปู SPC</button>
+    </div>
+    <div class="g2" style="margin-bottom:12px;">
+      <div><div style="font-size:11px;color:var(--text2);margin-bottom:4px;">กว้าง (เมตร)</div><input class="inp" id="aw" type="number" placeholder="4"></div>
+      <div><div style="font-size:11px;color:var(--text2);margin-bottom:4px;">ยาว/สูง (เมตร)</div><input class="inp" id="ah" type="number" placeholder="5"></div>
+      <div id="tw-wrap" style="display:none;"><div style="font-size:11px;color:var(--text2);margin-bottom:4px;">กระเบื้องกว้าง (cm)</div><input class="inp" id="tw" type="number" value="60"></div>
+      <div id="th-wrap" style="display:none;"><div style="font-size:11px;color:var(--text2);margin-bottom:4px;">กระเบื้องยาว (cm)</div><input class="inp" id="th" type="number" value="60"></div>
+    </div>
+    <button class="btn btn-p" onclick="calcArea()">คำนวณ</button>
+  </div>
+  <div id="area-result"></div>
+</div>
+
+<!-- ========== DASHBOARD ========== -->
+<div id="page-dashboard" class="page">
+  <div id="dash"><div class="loading"><div class="spinner"></div><div style="color:var(--text2);font-size:13px;">กำลังโหลด...</div></div></div>
+</div>
+
+</div>
+
+<script>
+// ==================== STATE ====================
+const CO = {name:'บริษัท รักพราวด์ จำกัด',address:'323 แขวงสามวาตะวันตก เขตคลองสามวา กทม 10510',tax:'010-5560-012652',phone:'085-067-6217'};
+const PIN = '23121985';
+let products = [];
+let chatCart = [];
+let quoteItems = [];
+let qMode = 'quote';
+let aType = 'paint';
+let cs = {mode:'bot',step:'idle',waitingSelect:null,waitingQty:null,waitingPin:false};
+
+// ==================== INIT ====================
+window.onload = () => {
+  addBot('สวัสดีครับ ผมเป็น AI ที่ปรึกษาด้านวัสดุก่อสร้างของ บ.รักพราวด์ จำกัด\nไม่ว่าจะเป็นการเลือกวัสดุ คำนวณปริมาณ หรือสอบถามราคา ยินดีให้คำแนะนำครับ\nมีอะไรให้ช่วยไหมครับ? 😊');
+  loadProducts();
+};
+
+// ==================== LOAD PRODUCTS via Apps Script ====================
+function loadProducts() {
+  google.script.run
+    .withSuccessHandler(data => {
+      products = JSON.parse(data);
+      document.getElementById('prod-count').textContent = products.length + ' สินค้า';
+      renderProds();
+      renderProfitOverview();
+      renderDoc();
+    })
+    .withFailureHandler(err => {
+      console.error(err);
+      document.getElementById('prod-count').textContent = 'โหลดไม่สำเร็จ';
+    })
+    .getProductsForWeb();
+}
+
+// ==================== FUZZY SEARCH ====================
+function fuzzy(q, list) {
+  const s = q.toLowerCase().trim();
+  if (!s) return [];
+  return list.filter(p => {
+    const str = `${p.name} ${p.keywords} ${p.category} ${p.sku}`.toLowerCase();
+    if (str.includes(s)) return true;
+    return s.split(/\s+/).every(w => str.includes(w));
+  });
+}
+
+// ==================== TABS ====================
+function goTab(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  el.classList.add('active');
+  if (name === 'dashboard') renderDash();
+  if (name === 'quote') checkImport();
+}
+
+// ==================== CHAT ====================
+function fmt(t) {
+  return t.replace(/\*\*(.+?)\*\*/g,'<strong style="color:var(--orange2);">$1</strong>').replace(/\n/g,'<br>');
+}
+function esc(t) { const d=document.createElement('div');d.textContent=t;return d.innerHTML; }
+function setInp(t) { document.getElementById('chat-inp').value=t;document.getElementById('chat-inp').focus(); }
+
+function addBot(text, cls='') {
+  const wrap = document.getElementById('chat-msgs');
+  const div = document.createElement('div');
+  div.className = 'msg-row fade-up';
+  div.innerHTML = `<div class="avatar">🤖</div><div class="bubble bot ${cls}">${fmt(text)}</div>`;
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+function addUser(text) {
+  const wrap = document.getElementById('chat-msgs');
+  const div = document.createElement('div');
+  div.className = 'msg-row user fade-up';
+  div.innerHTML = `<div class="bubble user">${esc(text)}</div>`;
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+function sendChat() {
+  const inp = document.getElementById('chat-inp');
+  const msg = inp.value.trim();
+  if (!msg) return;
+  inp.value = '';
+  addUser(msg);
+  handleChat(msg);
+}
+
+function handleChat(msg) {
+  const s = cs;
+
+  // WAITING PIN
+  if (s.waitingPin) {
+    if (msg === PIN) { s.waitingPin=false; s.mode='admin'; addBot('✅ เข้าสู่โหมดแอดมินแล้วครับ\nพิมพ์ "จบงาน" เพื่อให้บอทกลับมาครับ','admin'); }
+    else { s.waitingPin=false; addBot('❌ PIN ไม่ถูกต้องครับ'); }
+    return;
+  }
+
+  // ADMIN MODE
+  if (s.mode === 'admin') {
+    if (msg === 'จบงาน') { s.mode='bot';s.step='idle';chatCart=[];renderCart(); addBot('✅ บอทกลับมาทำงานแล้วครับ รายการเก่าถูกเคลียร์แล้ว\n\nมีอะไรให้ช่วยไหมครับ? 😊'); }
+    else addBot('🔒 โหมดแอดมิน\nพิมพ์ "จบงาน" เพื่อให้บอทกลับมา','admin');
+    return;
+  }
+
+  // ADMIN TRIGGER
+  if (msg === 'แอดมิน') { s.waitingPin=true; addBot('🔐 กรุณาใส่ PIN ครับ','admin'); return; }
+
+  // CONTACT
+  if (msg.includes('ขอคุยกับเจ้าหน้าที่')||msg.includes('ติดต่อเจ้าหน้าที่')||msg.includes('คุยกับคน')) {
+    addBot('📞 รับทราบครับ กำลังแจ้งเจ้าหน้าที่ให้ครับ รอสักครู่นะครับ 🙏\nหรือโทรตรงได้ที่ 085-067-6217 ครับ'); return;
+  }
+
+  // CANCEL
+  const cancels = ['ยกเลิก','cancel','ไม่เอา','ไม่ต้องการ','0','เปลี่ยน'];
+  if (cancels.includes(msg.toLowerCase().trim()) && (s.step==='waiting_select'||s.step==='waiting_qty')) {
+    s.step='idle'; s.waitingSelect=null; s.waitingQty=null;
+    addBot('✅ ยกเลิกแล้วครับ มีอะไรให้ช่วยอีกไหมครับ? 😊'); return;
+  }
+
+  // SUMMARY
+  const sums = ['สรุปยอด','สรุป','เช็คบิล','ยอดรวม','ดูยอด'];
+  if (sums.some(w => msg.includes(w))) {
+    if (!chatCart.length) { addBot('ยังไม่มีรายการในตะกร้าครับ 😊\nลองพิมพ์ชื่อสินค้าได้เลยครับ'); return; }
+    const total = chatCart.reduce((a,i)=>a+i.total,0);
+    const lines = chatCart.map((it,i)=>`${i+1}. **${it.name}**\n   🔖 SKU: ${it.sku}\n   ${it.qty} ${it.unit} × ${it.sellPrice.toLocaleString()} = ${it.total.toLocaleString()} บ`).join('\n\n');
+    s.step = 'post_summary';
+    addBot(`🧾 **สรุปรายการสั่งซื้อ**\n\n${lines}\n\n💵 ยอดรวม: **${total.toLocaleString()} บาท**\n\nต้องการทำอะไรต่อครับ?\n1️⃣ เพิ่มสินค้า\n2️⃣ ออกใบเสนอราคา\n3️⃣ จบการสั่งซื้อ`);
+    return;
+  }
+
+  // POST SUMMARY
+  if (s.step === 'post_summary') {
+    if (msg==='1'||msg.includes('เพิ่ม')) { s.step='idle'; addBot('ได้เลยครับ 😊 พิมพ์ชื่อสินค้าได้เลยครับ'); return; }
+    if (msg==='2'||msg.includes('ใบเสนอ')) { s.step='idle'; addBot('✅ กรุณาไปที่แท็บ **📄 ใบเสนอราคา** ด้านบนได้เลยครับ'); return; }
+    if (msg==='3'||msg.includes('จบ')||msg.includes('ขอบคุณ')) { s.step='idle'; chatCart=[]; renderCart(); addBot('ขอบคุณครับ 🙏 ยินดีให้บริการเสมอครับ\nบ.รักพราวด์ จำกัด | 085-067-6217'); return; }
+  }
+
+  // WAITING SELECT
+  if (s.step==='waiting_select'&&s.waitingSelect) {
+    const idx = parseInt(msg)-1;
+    if (!isNaN(idx)&&idx>=0&&idx<s.waitingSelect.length) {
+      const sel = s.waitingSelect[idx];
+      s.step='waiting_qty'; s.waitingQty=sel; s.waitingSelect=null;
+      addBot(`✅ เลือก: **${sel.name}**\n🔖 SKU: ${sel.sku}\n💰 ${sel.sellPrice.toLocaleString()} บาท/${sel.unit}\n\nจำนวนกี่ ${sel.unit} ครับ?\n(พิมพ์ "ยกเลิก" เพื่อเปลี่ยน)`);
+    } else {
+      addBot('กรุณาพิมพ์หมายเลขที่ต้องการครับ 🙏\nหรือพิมพ์ "ยกเลิก" เพื่อค้นหาใหม่');
+    }
+    return;
+  }
+
+  // WAITING QTY
+  if (s.step==='waiting_qty'&&s.waitingQty) {
+    const qty = parseFloat(msg);
+    if (!isNaN(qty)&&qty>0) {
+      const item = s.waitingQty;
+      const total = qty*item.sellPrice;
+      chatCart.push({...item,qty,total});
+      s.step='idle'; s.waitingQty=null;
+      renderCart();
+      const ct = chatCart.reduce((a,i)=>a+i.total,0);
+      addBot(`✅ เพิ่มรายการแล้วครับ\n\n📦 **${item.name}**\n🔖 SKU: ${item.sku}\n🔢 ${qty} ${item.unit} × ${item.sellPrice.toLocaleString()} บาท\n💵 รวม **${total.toLocaleString()} บาท**\n\n🛒 ยอดสะสม: ${ct.toLocaleString()} บาท\n\nต้องการสินค้าอื่นเพิ่มไหมครับ?\nพิมพ์ "สรุปยอด" ได้เลยครับ`);
+    } else {
+      addBot('กรุณาพิมพ์จำนวนเป็นตัวเลขครับ 🙏\nหรือพิมพ์ "ยกเลิก" เพื่อยกเลิก');
+    }
+    return;
+  }
+
+  // CONVERSATIONAL
+  const ends = ['ไม่','โอเค','ok','okay','เดี๋ยวก่อน','ยังไม่','ไม่เป็นไร','เท่านี้'];
+  const m = msg.toLowerCase().trim();
+  if (ends.some(w=>m===w||m===w+'ครับ'||m===w+'ค่ะ')) {
+    addBot('ขอบคุณครับ 🙏 หากต้องการความช่วยเหลือเพิ่มเติม ทักมาได้เลยนะครับ\nบ.รักพราวด์ จำกัด ยินดีให้บริการเสมอครับ'); return;
+  }
+
+  // PRODUCT SEARCH
+  if (!products.length) { addBot('ระบบกำลังโหลดข้อมูลสินค้าครับ รอสักครู่แล้วลองใหม่ครับ 🙏'); return; }
+  const numMatch = msg.match(/(\d+(\.\d+)?)/);
+  const qty = numMatch ? parseFloat(numMatch[1]) : null;
+  const q = msg.replace(/\d+/g,'').trim()||msg;
+  const found = fuzzy(q, products);
+
+  if (!found.length) {
+    addBot('ขออภัยครับ ไม่พบสินค้าที่ค้นหา 🙏\n\nลองพิมพ์ชื่ออื่น หรือพิมพ์ "ขอคุยกับเจ้าหน้าที่" ครับ\n📞 085-067-6217');
+    return;
+  }
+
+  if (found.length===1) {
+    if (qty) {
+      const total = qty*found[0].sellPrice;
+      chatCart.push({...found[0],qty,total});
+      renderCart();
+      const ct = chatCart.reduce((a,i)=>a+i.total,0);
+      addBot(`✅ **${found[0].name}**\n🔖 SKU: ${found[0].sku}\n🔢 ${qty} ${found[0].unit} × ${found[0].sellPrice.toLocaleString()} บาท\n💵 รวม **${total.toLocaleString()} บาท**\n\n🛒 ยอดสะสม: ${ct.toLocaleString()} บาท\n\nต้องการสินค้าอื่นไหมครับ? หรือพิมพ์ "สรุปยอด" ครับ`);
+    } else {
+      s.step='waiting_qty'; s.waitingQty=found[0];
+      addBot(`✅ พบ: **${found[0].name}**\n🔖 SKU: ${found[0].sku}\n💰 ${found[0].sellPrice.toLocaleString()} บาท/${found[0].unit}\n\nจำนวนกี่ ${found[0].unit} ครับ?`);
+    }
+    return;
+  }
+
+  const limit = Math.min(found.length,8);
+  const list = found.slice(0,limit).map((p,i)=>`${i+1}. **${p.name}**\n   🔖 ${p.sku} | ${p.sellPrice.toLocaleString()} บ/${p.unit}`).join('\n\n');
+  s.step='waiting_select'; s.waitingSelect=found.slice(0,limit);
+  addBot(`🔍 พบสินค้าหลายรายการครับ\nกรุณาพิมพ์หมายเลขที่ต้องการ:\n\n${list}\n\n(พิมพ์ "ยกเลิก" เพื่อค้นหาใหม่ครับ)`);
+}
+
+// ==================== CART ====================
+function renderCart() {
+  const el = document.getElementById('cart-summary');
+  const total = chatCart.reduce((a,i)=>a+i.total,0);
+  if (!chatCart.length) { el.style.display='none'; return; }
+  el.style.display='block';
+  document.getElementById('cart-total').textContent = total.toLocaleString()+' บาท';
+  document.getElementById('cart-list').innerHTML = chatCart.map((it,i)=>`
+    <div class="cart-row">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;">${it.name}</div>
+        <div style="font-size:11px;color:var(--text2);">🔖 ${it.sku} × ${it.qty} ${it.unit}</div>
+      </div>
+      <span style="color:var(--orange);font-weight:600;">${it.total.toLocaleString()} บ</span>
+    </div>`).join('');
+}
+function clearCart() { chatCart=[]; renderCart(); }
+
+// ==================== PRODUCTS ====================
+function renderProds() {
+  const q = document.getElementById('prod-search')?.value||'';
+  const list = q ? fuzzy(q,products) : products;
+  document.getElementById('prod-body').innerHTML = list.length
+    ? list.map(p=>`<tr>
+        <td><span class="badge b-b">${p.sku}</span></td>
+        <td style="font-weight:500;">${p.name}</td>
+        <td><span class="badge b-o">${p.category}</span></td>
+        <td style="text-align:right;">${p.buyPrice.toLocaleString()}</td>
+        <td style="text-align:right;color:var(--orange);font-weight:600;">${p.sellPrice.toLocaleString()}</td>
+        <td style="text-align:right;"><span class="badge ${p.margin>=20?'b-g':p.margin>=10?'b-o':'b-r'}">${p.margin.toFixed(1)}%</span></td>
+        <td style="color:var(--text2);">${p.unit}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text2);">ไม่พบสินค้า</td></tr>';
+}
+
+// ==================== PROFIT ====================
+function searchProfit() {
+  const q = document.getElementById('profit-inp').value;
+  const dd = document.getElementById('profit-dd');
+  if (!q.trim()) { dd.style.display='none'; return; }
+  const found = fuzzy(q,products).slice(0,6);
+  if (!found.length) { dd.style.display='none'; return; }
+  dd.innerHTML = found.map(p=>`
+    <div class="dd-item" onclick="selectProfit('${p.sku}')">
+      <div><div style="font-weight:600;">${p.name}</div><div style="font-size:11px;color:var(--text2);">${p.sku}</div></div>
+      <div style="text-align:right;flex-shrink:0;"><div style="color:var(--orange);font-weight:600;">${p.sellPrice.toLocaleString()} บ</div><div style="font-size:11px;color:var(--green);">${p.margin.toFixed(1)}%</div></div>
+    </div>`).join('');
+  dd.style.display='block';
+}
+
+function selectProfit(sku) {
+  const p = products.find(x=>x.sku===sku);
+  if (!p) return;
+  document.getElementById('profit-dd').style.display='none';
+  document.getElementById('profit-inp').value=p.name;
+  document.getElementById('profit-result').innerHTML=`
+    <div class="card fade-up" style="border-color:var(--green);">
+      <div class="card-title" style="color:var(--green);">📊 ${p.name}</div>
+      <div class="g2">
+        ${[['ต้นทุน/หน่วย',p.buyPrice.toLocaleString()+' บ','var(--red)'],
+           ['ราคาขาย/หน่วย',p.sellPrice.toLocaleString()+' บ','var(--blue)'],
+           ['กำไร/หน่วย',p.profit.toLocaleString()+' บ','var(--orange)'],
+           ['Margin %',p.margin.toFixed(1)+'%','var(--purple)']].map(([l,v,c])=>`
+          <div class="stat"><div class="stat-lbl">${l}</div><div class="stat-val" style="color:${c};">${v}</div></div>`).join('')}
+      </div>
+      <div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:14px;margin-top:12px;text-align:center;">
+        <div style="font-size:11px;color:var(--text2);">กำไรสุทธิต่อหน่วย</div>
+        <div style="font-weight:800;font-size:24px;color:var(--green);">${p.profit.toLocaleString()} บาท</div>
+      </div>
+    </div>`;
+}
+
+function renderProfitOverview() {
+  const el = document.getElementById('profit-overview');
+  if (!el||!products.length) return;
+  const cats = [...new Set(products.map(p=>p.category))];
+  el.innerHTML = cats.map(cat=>{
+    const ps = products.filter(p=>p.category===cat);
+    const avg = (ps.reduce((s,p)=>s+p.margin,0)/ps.length).toFixed(1);
+    return `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
+      <span><span class="badge b-o">${cat}</span> <span style="color:var(--text2);font-size:11px;">${ps.length} รายการ</span></span>
+      <span class="badge ${avg>=20?'b-g':avg>=10?'b-o':'b-r'}">${avg}%</span>
+    </div>`;
+  }).join('');
+}
+
+// ==================== QUOTE ====================
+function setQMode(m) {
+  qMode=m;
+  document.getElementById('btn-q').className='btn '+(m==='quote'?'btn-p':'btn-s');
+  document.getElementById('btn-d').className='btn '+(m==='delivery'?'btn-p':'btn-s');
+  renderDoc();
+}
+
+function checkImport() {
+  document.getElementById('import-banner').style.display = chatCart.length ? 'block' : 'none';
+}
+
+function importCart() {
+  quoteItems = chatCart.map(i=>({...i}));
+  document.getElementById('import-banner').style.display='none';
+  renderDoc();
+}
+
+function searchQuote() {
+  const q = document.getElementById('q-search').value;
+  const dd = document.getElementById('q-dd');
+  if (!q.trim()) { dd.style.display='none'; return; }
+  const found = fuzzy(q,products).slice(0,6);
+  if (!found.length) { dd.style.display='none'; return; }
+  dd.innerHTML = found.map(p=>`
+    <div class="dd-item" onclick="addToQuote('${p.sku}')">
+      <div><div style="font-weight:600;">${p.name}</div><div style="font-size:11px;color:var(--text2);">${p.sku}</div></div>
+      <div style="color:var(--orange);font-weight:600;">${p.sellPrice.toLocaleString()} บ/${p.unit}</div>
+    </div>`).join('');
+  dd.style.display='block';
+}
+
+function addToQuote(sku) {
+  const p = products.find(x=>x.sku===sku);
+  if (!p) return;
+  document.getElementById('q-dd').style.display='none';
+  document.getElementById('q-search').value='';
+  const ex = quoteItems.find(i=>i.sku===sku);
+  if (ex) { ex.qty+=1; ex.total=ex.qty*ex.sellPrice; }
+  else quoteItems.push({...p,qty:1,total:p.sellPrice});
+  renderDoc();
+}
+
+function updQty(sku,val) {
+  const q = parseFloat(val);
+  const item = quoteItems.find(i=>i.sku===sku);
+  if (!item) return;
+  if (!q||q<=0) quoteItems=quoteItems.filter(i=>i.sku!==sku);
+  else { item.qty=q; item.total=q*item.sellPrice; }
+  renderDoc();
+}
+
+function rmQuote(sku) { quoteItems=quoteItems.filter(i=>i.sku!==sku); renderDoc(); }
+
+function renderDoc() {
+  const total = quoteItems.reduce((a,i)=>a+i.total,0);
+  const name = document.getElementById('q-name')?.value||'-';
+  const addr = document.getElementById('q-addr')?.value||'';
+  const tax = document.getElementById('q-tax')?.value||'';
+  const title = qMode==='quote'?'ใบเสนอราคา':'ใบส่งของ';
+  const color = qMode==='quote'?'#e85d04':'#1d4ed8';
+
+  const rows = quoteItems.map((it,i)=>`<tr>
+    <td style="padding:8px;">${i+1}</td>
+    <td style="padding:8px;">${it.name}<br><small style="color:#888;">SKU: ${it.sku}</small></td>
+    <td style="padding:6px 8px;text-align:center;">
+      <input type="number" value="${it.qty}" min="0.1" step="0.1" onchange="updQty('${it.sku}',this.value)"
+        style="width:55px;border:1px solid #ddd;border-radius:4px;padding:3px;text-align:center;font-size:12px;">
+    </td>
+    <td style="padding:8px;text-align:center;">${it.unit}</td>
+    ${qMode==='quote'?`<td style="padding:8px;text-align:right;">${it.sellPrice.toLocaleString()}</td><td style="padding:8px;text-align:right;font-weight:600;">${it.total.toLocaleString()}</td>`:''}
+    <td style="padding:4px;"><button onclick="rmQuote('${it.sku}')" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:14px;">✕</button></td>
+  </tr>`).join('');
+
+  document.getElementById('doc-preview').innerHTML=`
+    <div style="border-bottom:2px solid #e85d04;padding-bottom:10px;margin-bottom:12px;">
+      <div style="font-family:'Kanit',sans-serif;font-weight:700;font-size:17px;color:#e85d04;">${CO.name}</div>
+      <div style="font-size:11px;color:#555;">${CO.address}</div>
+      <div style="font-size:11px;color:#555;">โทร: ${CO.phone} | เลขผู้เสียภาษี: ${CO.tax}</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+      <div>
+        <div style="font-size:22px;font-weight:700;color:${color};">${title}</div>
+        <div style="font-size:12px;color:#555;">ลูกค้า: ${name}</div>
+        ${addr?`<div style="font-size:11px;color:#777;">${addr}</div>`:''}
+        ${tax?`<div style="font-size:11px;color:#777;">เลขผู้เสียภาษี: ${tax}</div>`:''}
+      </div>
+      <div style="text-align:right;font-size:11px;color:#555;">
+        <div>วันที่: ${new Date().toLocaleDateString('th-TH')}</div>
+        <div>เลขที่: QT-${Date.now().toString().slice(-6)}</div>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <thead><tr style="background:#f5f5f5;">
+        <th style="padding:8px;text-align:left;border-bottom:1px solid #ddd;">#</th>
+        <th style="padding:8px;text-align:left;border-bottom:1px solid #ddd;">รายการ</th>
+        <th style="padding:8px;text-align:center;border-bottom:1px solid #ddd;">จำนวน</th>
+        <th style="padding:8px;text-align:center;border-bottom:1px solid #ddd;">หน่วย</th>
+        ${qMode==='quote'?"<th style='padding:8px;text-align:right;border-bottom:1px solid #ddd;'>ราคา/หน่วย</th><th style='padding:8px;text-align:right;border-bottom:1px solid #ddd;'>รวม</th>":''}
+        <th style="border-bottom:1px solid #ddd;width:30px;"></th>
+      </tr></thead>
+      <tbody>${rows||`<tr><td colspan="7" style="padding:20px;text-align:center;color:#aaa;">ยังไม่มีรายการสินค้า</td></tr>`}</tbody>
+      ${qMode==='quote'&&quoteItems.length?`<tfoot><tr style="border-top:2px solid #e85d04;"><td colspan="5"></td><td style="padding:10px 8px;font-weight:700;text-align:right;">ยอดรวม:</td><td style="padding:10px 8px;font-weight:800;color:#e85d04;font-size:15px;text-align:right;">${total.toLocaleString()} บาท</td></tr></tfoot>`:''}
+    </table></div>
+    <div style="margin-top:14px;font-size:10px;color:#aaa;text-align:center;">${CO.name} | ${CO.phone}</div>`;
+
+  document.getElementById('quote-actions').style.display = quoteItems.length ? 'flex' : 'none';
+}
+
+async function fetchTax() {
+  const id = document.getElementById('q-tax').value;
+  const err = document.getElementById('tax-err');
+  if (id.length!==13) { err.textContent='กรุณากรอกเลข 13 หลักครับ'; return; }
+  err.textContent='กำลังค้นหา...';
+  try {
+    const res = await fetch(`https://api.rd.go.th/publicapi/juristic/${id}`,{headers:{'Content-Type':'application/json'}});
+    const data = await res.json();
+    if (data&&data.juristicStatus==='จดทะเบียน') {
+      document.getElementById('q-name').value = data.juristicNameTh||'';
+      document.getElementById('q-addr').value = [data.addressBuildingName,data.addressStreetName,data.subDistrictNameTh,data.districtNameTh,data.provinceNameTh,data.postCode].filter(Boolean).join(' ');
+      err.textContent='';
+    } else err.textContent='ไม่พบข้อมูล กรอกชื่อเองได้ครับ';
+  } catch { err.textContent='เชื่อมต่อไม่ได้ กรอกชื่อเองได้ครับ'; }
+  renderDoc();
+}
+
+function printDoc() {
+  const total = quoteItems.reduce((a,i)=>a+i.total,0);
+  const name = document.getElementById('q-name').value||'-';
+  const addr = document.getElementById('q-addr').value||'';
+  const tax = document.getElementById('q-tax').value||'';
+  const title = qMode==='quote'?'ใบเสนอราคา':'ใบส่งของ';
+  const color = qMode==='quote'?'#e85d04':'#1d4ed8';
+  const rows = quoteItems.map((it,i)=>`<tr><td>${i+1}</td><td>${it.name}<br><small style="color:#888;">SKU: ${it.sku}</small></td><td style="text-align:center;">${it.qty}</td><td style="text-align:center;">${it.unit}</td>${qMode==='quote'?`<td style="text-align:right;">${it.sellPrice.toLocaleString()}</td><td style="text-align:right;font-weight:600;">${it.total.toLocaleString()}</td>`:''}</tr>`).join('');
+  const w = window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title><link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet"><style>body{font-family:'Sarabun',sans-serif;padding:25px;color:#111;max-width:800px;margin:0 auto;}table{width:100%;border-collapse:collapse;font-size:13px;}th{background:#f5f5f5;padding:8px;border-bottom:1px solid #ddd;text-align:left;}td{padding:8px;border-bottom:1px solid #eee;}@media print{@page{size:A4;margin:15mm;}}</style></head><body><div style="border-bottom:3px solid #e85d04;padding-bottom:10px;margin-bottom:14px;"><div style="font-size:18px;font-weight:700;color:#e85d04;">${CO.name}</div><div style="font-size:11px;color:#555;">${CO.address}</div><div style="font-size:11px;color:#555;">โทร: ${CO.phone} | เลขผู้เสียภาษี: ${CO.tax}</div></div><div style="display:flex;justify-content:space-between;margin-bottom:14px;"><div><div style="font-size:22px;font-weight:700;color:${color};">${title}</div><div>ลูกค้า: ${name}</div>${addr?`<div style="font-size:11px;color:#555;">${addr}</div>`:''}${tax?`<div style="font-size:11px;color:#555;">เลขผู้เสียภาษี: ${tax}</div>`:''}</div><div style="text-align:right;font-size:11px;color:#555;"><div>วันที่: ${new Date().toLocaleDateString('th-TH')}</div></div></div><table><thead><tr><th>#</th><th>รายการ</th><th style="text-align:center;">จำนวน</th><th style="text-align:center;">หน่วย</th>${qMode==='quote'?"<th style='text-align:right;'>ราคา/หน่วย</th><th style='text-align:right;'>รวม</th>":''}</tr></thead><tbody>${rows}</tbody>${qMode==='quote'?`<tfoot><tr style="border-top:2px solid #e85d04;"><td colspan="4"></td><td style="padding:10px;font-weight:700;text-align:right;">ยอดรวม:</td><td style="padding:10px;font-weight:800;color:#e85d04;text-align:right;">${total.toLocaleString()} บาท</td></tr></tfoot>`:''}</table><div style="margin-top:30px;font-size:10px;color:#888;text-align:center;">${CO.name} | ${CO.phone}</div><script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};};<\/script></body></html>`);
+  w.document.close();
+}
+
+function shareDoc() {
+  const total = quoteItems.reduce((a,i)=>a+i.total,0);
+  const lines = quoteItems.map((it,i)=>`${i+1}. ${it.name} (${it.sku})%0A   ${it.qty} ${it.unit}${qMode==='quote'?` × ${it.sellPrice.toLocaleString()} = ${it.total.toLocaleString()} บ`:''}`).join('%0A%0A');
+  const totalLine = qMode==='quote'?`%0A%0A💵 ยอดรวม: ${total.toLocaleString()} บาท`:'';
+  window.open(`https://line.me/R/share?text=🏗️ ${CO.name}%0A${qMode==='quote'?'ใบเสนอราคา':'ใบส่งของ'}%0A%0A${lines}${totalLine}%0A%0A📞 ${CO.phone}`,'_blank');
+}
+
+function saveOrder() {
+  if (!quoteItems.length) { alert('ไม่มีรายการครับ'); return; }
+  const order = {
+    customerName: document.getElementById('q-name').value||'-',
+    items: quoteItems,
+  };
+  google.script.run
+    .withSuccessHandler(() => alert('บันทึกออเดอร์แล้วครับ ✅'))
+    .withFailureHandler(e => alert('บันทึกไม่สำเร็จ: '+e))
+    .saveOrderForWeb(JSON.stringify(order));
+}
+
+// ==================== AREA ====================
+function setArea(t) {
+  aType=t;
+  ['paint','tile','spc'].forEach(x=>{
+    document.getElementById('a-'+x).className='btn '+(x===t?'btn-p':'btn-s');
+  });
+  document.getElementById('tw-wrap').style.display=t==='tile'?'block':'none';
+  document.getElementById('th-wrap').style.display=t==='tile'?'block':'none';
+}
+
+function calcArea() {
+  const w=parseFloat(document.getElementById('aw').value);
+  const h=parseFloat(document.getElementById('ah').value);
+  if(!w||!h) { alert('กรุณากรอกขนาดพื้นที่ครับ'); return; }
+  const area=w*h, extra=(area*1.1).toFixed(1);
+  let rows='';
+  if(aType==='paint') {
+    const primer=Math.ceil(extra/10), top=Math.ceil(extra*2/9);
+    rows=[['🎨 สีรองพื้น TOA (1รอบ)',`${primer} ลิตร / ${Math.ceil(primer/5)} กระป๋อง 5L`,'var(--orange)'],
+          ['🎨 สีทับหน้า TOA (2รอบ)',`${top} ลิตร / ${Math.ceil(top/5)} กระป๋อง 5L`,'var(--orange)']].map(r=>row(...r)).join('');
+    rows+='<div style="font-size:11px;color:var(--text2);margin-top:6px;">* อ้างอิง TOA: รองพื้น 10-12ตรม/ลิตร, ทับหน้า 8-10ตรม/ลิตร</div>';
+  } else if(aType==='tile') {
+    const tw=parseFloat(document.getElementById('tw').value)||60;
+    const th=parseFloat(document.getElementById('th').value)||60;
+    const cnt=Math.ceil(extra/((tw/100)*(th/100)));
+    rows=[['🟫 กระเบื้อง '+tw+'×'+th+' cm',cnt+' แผ่น','var(--orange)'],
+          ['🪣 กาวซีเมนต์ 25kg/ถุง',Math.ceil(area/5)+' ถุง','var(--green)'],
+          ['📐 ยาแนว',Math.ceil(area/2)+' kg','var(--green)']].map(r=>row(...r)).join('');
+  } else {
+    const boxes=Math.ceil(extra/2.22);
+    rows=[['🪵 กล่อง SPC (10แผ่น=2.22ตรม)',boxes+' กล่อง','var(--orange)'],
+          ['📦 จำนวนแผ่น',boxes*10+' แผ่น','var(--green)'],
+          ['🛡️ Underlay',extra+' ตร.ม.','var(--blue)']].map(r=>row(...r)).join('');
+    rows+='<div style="font-size:11px;color:var(--text2);margin-top:6px;">* อ้างอิง: 1กล่อง = 10แผ่น = 2.22ตร.ม.</div>';
+  }
+  document.getElementById('area-result').innerHTML=`
+    <div class="card fade-up" style="border-color:var(--blue);">
+      <div class="card-title" style="color:var(--blue);">📊 ผลการคำนวณ ${w}×${h} เมตร</div>
+      <div class="g2" style="margin-bottom:12px;">
+        <div class="stat"><div class="stat-lbl">พื้นที่จริง</div><div class="stat-val" style="color:var(--blue);">${area} ตร.ม.</div></div>
+        <div class="stat"><div class="stat-lbl">รวมสำรอง 10%</div><div class="stat-val" style="color:var(--orange);">${extra} ตร.ม.</div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">${rows}</div>
+    </div>`;
+}
+function row(label,val,color) {
+  return `<div style="display:flex;justify-content:space-between;padding:10px 12px;background:var(--bg2);border-radius:8px;font-size:13px;"><span>${label}</span><span style="color:${color};font-weight:600;">${val}</span></div>`;
+}
+
+// ==================== DASHBOARD ====================
+function renderDash() {
+  if (!products.length) { setTimeout(renderDash,500); return; }
+  const total=products.length;
+  const avgM=(products.reduce((s,p)=>s+p.margin,0)/total).toFixed(1);
+  const cats=[...new Set(products.map(p=>p.category))];
+  const top5=[...products].sort((a,b)=>b.margin-a.margin).slice(0,5);
+  const maxM=Math.max(...top5.map(p=>p.margin));
+
+  // Load weekly summary from Sheet
+  google.script.run
+    .withSuccessHandler(data => {
+      const summary = JSON.parse(data);
+      document.getElementById('dash').innerHTML=`
+        <div class="g3" style="margin-bottom:14px;">
+          <div class="stat"><div class="stat-lbl">สินค้าทั้งหมด</div><div class="stat-val" style="color:var(--blue);">${total}</div><div class="stat-sub">รายการ</div></div>
+          <div class="stat"><div class="stat-lbl">Avg. Margin</div><div class="stat-val" style="color:var(--green);">${avgM}%</div><div class="stat-sub">เฉลี่ย</div></div>
+          <div class="stat"><div class="stat-lbl">หมวดหมู่</div><div class="stat-val" style="color:var(--purple);">${cats.length}</div><div class="stat-sub">หมวด</div></div>
+        </div>
+
+        <div class="card" style="margin-bottom:14px;border-color:var(--orange);">
+          <div class="card-title">📅 สรุปออเดอร์ทั้งหมด</div>
+          <div class="g3">
+            <div class="stat"><div class="stat-lbl">ออเดอร์ทั้งหมด</div><div class="stat-val" style="color:var(--blue);">${summary.orders.length}</div></div>
+            <div class="stat"><div class="stat-lbl">ยอดขายรวม</div><div class="stat-val" style="color:var(--orange);">${Number(summary.totalRevenue).toLocaleString()}</div><div class="stat-sub">บาท</div></div>
+            <div class="stat"><div class="stat-lbl">กำไรสุทธิ</div><div class="stat-val" style="color:var(--green);">${Number(summary.totalProfit).toLocaleString()}</div><div class="stat-sub">บาท</div></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:14px;">
+          <div class="card-title">🏆 Top 5 Margin สูงสุด</div>
+          ${top5.map((p,i)=>`
+            <div class="bar-row">
+              <div class="bar-lbl" title="${p.name}">${['🥇','🥈','🥉','4️⃣','5️⃣'][i]} ${p.name}</div>
+              <div class="bar" style="width:${Math.max(20,(p.margin/maxM*160)).toFixed(0)}px;"></div>
+              <div class="bar-val" style="color:var(--green);">${p.margin.toFixed(1)}%</div>
+            </div>`).join('')}
+        </div>
+
+        <div class="card">
+          <div class="card-title">📦 Margin ตามหมวดหมู่</div>
+          ${cats.map(cat=>{
+            const ps=products.filter(p=>p.category===cat);
+            const avg=(ps.reduce((s,p)=>s+p.margin,0)/ps.length).toFixed(1);
+            return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
+              <span><span class="badge b-o">${cat}</span> <span style="color:var(--text2);font-size:11px;">${ps.length} รายการ</span></span>
+              <span class="badge ${avg>=20?'b-g':avg>=10?'b-o':'b-r'}">${avg}%</span>
+            </div>`;
+          }).join('')}
+        </div>
+        <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:12px;">${CO.name} | ${CO.tax} | ${CO.phone}</div>`;
+    })
+    .withFailureHandler(()=>{})
+    .getOrderSummaryForWeb();
+}
+
+// ==================== CLOSE DROPDOWNS ====================
+document.addEventListener('click', e => {
+  if (!e.target.closest('.search-wrap')) {
+    document.querySelectorAll('.dd').forEach(d=>d.style.display='none');
+  }
+});
+</script>
+</body>
+</html>
